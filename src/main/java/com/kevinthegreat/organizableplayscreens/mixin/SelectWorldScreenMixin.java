@@ -11,10 +11,7 @@ import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.terraformersmc.modmenu.gui.widget.LegacyTexturedButtonWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -105,9 +102,9 @@ public abstract class SelectWorldScreenMixin extends Screen {
      * @see #organizableplayscreens_pathWidget pathWidget
      */
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/layouts/LinearLayout;addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;", ordinal = 0))
-    private void organizableplayscreens_modifyHeader(CallbackInfo ci, @Local(ordinal = 0) LinearLayout headerLayout) {
+    private void organizableplayscreens_modifyHeader(CallbackInfo ci, @Local(name = "header") LinearLayout header) {
         if (organizableplayscreens_pathWidget == null) organizableplayscreens_pathWidget = new StringWidget(Component.empty(), font);
-        headerLayout.addChild(organizableplayscreens_pathWidget);
+        header.addChild(organizableplayscreens_pathWidget);
     }
 
     /**
@@ -123,12 +120,12 @@ public abstract class SelectWorldScreenMixin extends Screen {
 
         OrganizablePlayScreensOptions options = OrganizablePlayScreens.getInstance().options;
 
-        organizableplayscreens_buttonBack = addRenderableWidget(Button.builder(Component.nullToEmpty("←"), buttonWidget -> {
+        organizableplayscreens_buttonBack = addRenderableWidget(Button.builder(Component.nullToEmpty("←"), _ -> {
             if (!list.organizableplayscreens_setCurrentFolderToParent()) {
-                minecraft.setScreen(lastScreen);
+                minecraft.gui.setScreen(lastScreen);
             }
         }).bounds(options.backButtonX.get(), options.backButtonY.get(), 20, 20).build());
-        organizableplayscreens_buttonMoveEntryBack = addRenderableWidget(Button.builder(Component.nullToEmpty("←+"), buttonWidget -> {
+        organizableplayscreens_buttonMoveEntryBack = addRenderableWidget(Button.builder(Component.nullToEmpty("←+"), _ -> {
             if (!list.organizableplayscreens_isRootFolder()) {
                 WorldSelectionList.Entry entry = list.getSelected();
                 SingleplayerFolderEntry parentFolder = list.organizableplayscreens_getCurrentFolder().getParent();
@@ -146,11 +143,20 @@ public abstract class SelectWorldScreenMixin extends Screen {
                 list.organizableplayscreens_updateAndSave();
             }
         }).bounds(options.moveEntryBackButtonX.get(), options.moveEntryBackButtonY.get(), 20, 20).tooltip(OrganizablePlayScreens.MOVE_ENTRY_BACK_TOOLTIP).build());
-        organizableplayscreens_buttonNewEntry = addRenderableWidget(Button.builder(Component.nullToEmpty("+"), buttonWidget -> minecraft.setScreen(new SingleplayerEditEntryScreen(this, this::organizableplayscreens_addEntry, type -> {
+        organizableplayscreens_buttonNewEntry = addRenderableWidget(Button.builder(Component.nullToEmpty("+"), _ -> minecraft.gui.setScreen(new SingleplayerEditEntryScreen(this, this::organizableplayscreens_addEntry, type -> {
             SingleplayerFolderEntry folder = list.organizableplayscreens_getCurrentFolder();
             return organizableplayscreens_newEntry = type.singleplayerEntry((SelectWorldScreen) (Object) this, folder);
         }))).bounds(options.getValue(options.newFolderButtonX), options.newFolderButtonY.get(), 20, 20).build());
-        organizableplayscreens_buttonOptions = addRenderableWidget(new LegacyTexturedButtonWidget(options.getValue(options.optionsButtonX), options.optionsButtonY.get(), 20, 20, 0, 0, 20, OrganizablePlayScreens.OPTIONS_BUTTON_TEXTURE, 32, 64, buttonWidget -> minecraft.setScreen(new OrganizablePlayScreensOptionsScreen(this)), Component.translatable("organizableplayscreens:options.optionsButton")));
+        organizableplayscreens_buttonOptions = addRenderableWidget(SpriteIconButton.builder(Component.translatable("organizableplayscreens:options.optionsButton"), _ -> minecraft.gui.setScreen(new OrganizablePlayScreensOptionsScreen(this)), true)
+                .size(20, 20)
+                .sprite(new WidgetSprites(
+                        OrganizablePlayScreens.OPTIONS_BUTTON_ENABLED,
+                        OrganizablePlayScreens.OPTIONS_BUTTON_DISABLED,
+                        OrganizablePlayScreens.OPTIONS_BUTTON_FOCUSED
+                ), 20, 20)
+                .build()
+        );
+        organizableplayscreens_buttonOptions.setPosition(options.getValue(options.optionsButtonX), options.optionsButtonY.get());
     }
 
     /**
@@ -190,7 +196,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
     private Button.OnPress organizableplayscreens_modifyEditButton(Button.OnPress editAction) {
         return button -> {
             if (list.getSelected() instanceof AbstractSingleplayerEntry entry) {
-                minecraft.setScreen(new SingleplayerEditEntryScreen(this, this::organizableplayscreens_editEntry, entry));
+                minecraft.gui.setScreen(new SingleplayerEditEntryScreen(this, this::organizableplayscreens_editEntry, entry));
             } else editAction.onPress(button);
         };
     }
@@ -206,7 +212,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
         return button -> {
             if (list.getSelected() instanceof AbstractSingleplayerEntry entry) {
                 boolean isFolder = entry instanceof SingleplayerFolderEntry;
-                minecraft.setScreen(new ConfirmScreen(this::organizableplayscreens_deleteEntry, Component.translatable("organizableplayscreens:entry.deleteEntryQuestion", entry.getType().text().getString()), Component.translatable(isFolder ? "organizableplayscreens:folder.deleteSingleplayerFolderWarning" : "organizableplayscreens:entry.deleteEntryWarning", entry.getName()), Component.translatable("selectWorld.deleteButton"), CommonComponents.GUI_CANCEL));
+                minecraft.gui.setScreen(new ConfirmScreen(this::organizableplayscreens_deleteEntry, Component.translatable("organizableplayscreens:entry.deleteEntryQuestion", entry.getType().text().getString()), Component.translatable(isFolder ? "organizableplayscreens:folder.deleteSingleplayerFolderWarning" : "organizableplayscreens:entry.deleteEntryWarning", entry.getName()), Component.translatable("selectWorld.deleteButton"), CommonComponents.GUI_CANCEL));
             } else deleteAction.onPress(button);
         };
     }
@@ -243,7 +249,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
             list.setSelected(organizableplayscreens_newEntry);
             organizableplayscreens_newEntry = null;
         }
-        minecraft.setScreen(this);
+        minecraft.gui.setScreen(this);
     }
 
     /**
@@ -251,7 +257,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
      */
     @Unique
     private void organizableplayscreens_editEntry(boolean confirmedAction) {
-        minecraft.setScreen(this);
+        minecraft.gui.setScreen(this);
     }
 
     /**
@@ -275,7 +281,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
             list.setSelected(null);
             list.organizableplayscreens_updateAndSave();
         }
-        minecraft.setScreen(this);
+        minecraft.gui.setScreen(this);
     }
 
     /**
@@ -293,7 +299,7 @@ public abstract class SelectWorldScreenMixin extends Screen {
      * Updates the activation states of buttons. Called at the end of {@link #init()} and every time an entry is selected.
      */
     @Inject(method = "updateButtonStatus", at = @At("RETURN"))
-    private void organizableplayscreens_updateButtonStates(LevelSummary levelSummary, CallbackInfo ci) {
+    private void organizableplayscreens_updateButtonStates(LevelSummary summary, CallbackInfo ci) {
         WorldSelectionList.Entry selectedEntry = list.getSelected();
         if (selectedEntry instanceof WorldSelectionList.WorldListEntry) {
             playWorldButton.setMessage(Component.translatable("selectWorld.select"));

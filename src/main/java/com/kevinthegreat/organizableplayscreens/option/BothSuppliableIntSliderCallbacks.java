@@ -1,13 +1,13 @@
 package com.kevinthegreat.organizableplayscreens.option;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.Options;
 import net.minecraft.client.OptionInstance;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.util.Mth;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.UnaryOperator;
@@ -49,7 +49,7 @@ public record BothSuppliableIntSliderCallbacks(IntSupplier minSupplier, IntSuppl
     }
 
     @Override
-    public Function<OptionInstance<Integer>, AbstractWidget> createButton(OptionInstance.TooltipSupplier<Integer> tooltipFactory, Options gameOptions, int x, int y, int width, Consumer<Integer> changeCallback) {
+    public @NonNull Function<OptionInstance<Integer>, AbstractWidget> createButton(OptionInstance.@NonNull TooltipSupplier<Integer> tooltipFactory, @NonNull Options gameOptions, int x, int y, int width, OptionInstance.@NonNull ValueUpdateListener<? super Integer> changeCallback) {
         if (buttonType.get()) {
             return option -> new OptionIntTextFieldWidgetImpl(x + 20, y, width - 20, 20, option, this, tooltipFactory);
         } else {
@@ -58,12 +58,12 @@ public record BothSuppliableIntSliderCallbacks(IntSupplier minSupplier, IntSuppl
     }
 
     @Override
-    public Optional<Integer> validateValue(Integer integer) {
+    public @NonNull Optional<Integer> validateValue(@NonNull Integer integer) {
         return Optional.of(Mth.clamp(integer, minInclusive(), maxInclusive()));
     }
 
     @Override
-    public Codec<Integer> codec() {
+    public @NonNull Codec<Integer> codec() {
         return Codec.intRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 }

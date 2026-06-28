@@ -3,19 +3,19 @@ package com.kevinthegreat.organizableplayscreens.gui.screen;
 import com.google.common.collect.ImmutableList;
 import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.option.OrganizablePlayScreensOptions;
+import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.layouts.GridLayout;
-import net.minecraft.client.Options;
-import net.minecraft.client.OptionInstance;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Tuple;
 
 import java.util.List;
 
@@ -67,17 +67,17 @@ public class OrganizablePlayScreensButtonOptionsScreen extends OptionsSubScreen 
     protected void addContents() {
         int i = 0;
         ImmutableList.Builder<Button> resetButtonsBuilder = ImmutableList.builderWithExpectedSize(5);
-        for (List<Tuple<String, OptionInstance<?>>> optionRow : modOptions.optionsArray) {
+        for (List<Pair<String, OptionInstance<?>>> optionRow : modOptions.optionsArray) {
             int j = 0;
             int y = MARGIN_TOP + i * ROW_HEIGHT;
-            for (Tuple<String, OptionInstance<?>> namedOption : optionRow) {
+            for (Pair<String, OptionInstance<?>> namedOption : optionRow) {
                 int x = width / 2 - 155 + j * 135;
-                addRenderableWidget(namedOption.getB().createButton(options, x, y, 125));
+                addRenderableWidget(namedOption.value().createButton(options, x, y, 125));
                 j++;
             }
-            Button resetButton = Button.builder(Component.translatable("controls.reset"), (buttonWidget) -> {
+            Button resetButton = Button.builder(Component.translatable("controls.reset"), _ -> {
                 OrganizablePlayScreensOptions.reset(optionRow);
-                Minecraft.getInstance().setScreen(new OrganizablePlayScreensButtonOptionsScreen(lastScreen));
+                Minecraft.getInstance().gui.setScreen(new OrganizablePlayScreensButtonOptionsScreen(lastScreen));
             }).bounds(width / 2 - 155 + j * 135, y, 40, 20).build();
             resetButtonsBuilder.add(resetButton);
             addRenderableWidget(resetButton);
@@ -105,9 +105,9 @@ public class OrganizablePlayScreensButtonOptionsScreen extends OptionsSubScreen 
         GridLayout gridWidget = new GridLayout().columnSpacing(10);
         GridLayout.RowHelper adder = gridWidget.createRowHelper(2);
         adder.addChild(modOptions.buttonType.createButton(options));
-        adder.addChild(Button.builder(CommonComponents.GUI_DONE, (buttonWidget) -> {
+        adder.addChild(Button.builder(CommonComponents.GUI_DONE, _ -> {
             modOptions.save();
-            minecraft.setScreen(lastScreen);
+            minecraft.gui.setScreen(lastScreen);
         }).build());
         gridWidget.arrangeElements();
         layout.addToFooter(gridWidget);

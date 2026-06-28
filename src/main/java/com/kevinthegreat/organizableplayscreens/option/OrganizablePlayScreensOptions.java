@@ -6,27 +6,31 @@ import com.kevinthegreat.organizableplayscreens.gui.screen.OrganizablePlayScreen
 import com.kevinthegreat.organizableplayscreens.gui.screen.OrganizablePlayScreensButtonOptionsScreen;
 import com.kevinthegreat.organizableplayscreens.gui.screen.OrganizablePlayScreensOptionsScreen;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.JoinMultiplayerScreenAccessor;
-import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.OptionInstanceAccessor;
+import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import it.unimi.dsi.fastutil.Pair;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
-import net.minecraft.client.Options;
-import net.minecraft.client.OptionInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
 import net.minecraft.util.Util;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
+import java.util.function.ToIntFunction;
 import java.util.function.UnaryOperator;
 
 /**
@@ -39,26 +43,30 @@ public class OrganizablePlayScreensOptions {
     public static final Component Y = Component.translatable("organizableplayscreens:options.y");
     public static final String[] KEYS = new String[]{"organizableplayscreens:options.backButton", "organizableplayscreens:options.moveEntryBackButton", "organizableplayscreens:options.newFolderButton", "organizableplayscreens:options.optionsButton", "organizableplayscreens:options.moveEntryIntoButton"};
     private final Path optionsFile = FabricLoader.getInstance().getConfigDir().resolve(OrganizablePlayScreens.MOD_ID + ".json");
-    public final OptionInstance<Boolean> buttonType = new OptionInstance<>("organizableplayscreens:options.buttonType", OptionInstance.noTooltip(), (optionText, value) -> Component.translatable(value ? "organizableplayscreens:options.textField" : "organizableplayscreens:options.slider"), OptionInstance.BOOLEAN_VALUES, false, value -> {
-        if (Minecraft.getInstance().screen instanceof OrganizablePlayScreensButtonOptionsScreen organizablePlayScreensButtonOptionsScreen) {
-            Minecraft.getInstance().setScreen(new OrganizablePlayScreensButtonOptionsScreen(organizablePlayScreensButtonOptionsScreen.getParent()));
+    public final OptionInstance<Boolean> buttonType = new OptionInstance<>("organizableplayscreens:options.buttonType", OptionInstance.noTooltip(), (_, value) -> Component.translatable(value ? "organizableplayscreens:options.textField" : "organizableplayscreens:options.slider"), OptionInstance.BOOLEAN_VALUES, false, _ -> {
+        if (Minecraft.getInstance().gui.screen() instanceof OrganizablePlayScreensButtonOptionsScreen organizablePlayScreensButtonOptionsScreen) {
+            Minecraft.getInstance().gui.setScreen(new OrganizablePlayScreensButtonOptionsScreen(organizablePlayScreensButtonOptionsScreen.getParent()));
         }
     });
-    public final OptionInstance<Integer> backButtonX = new OptionInstance<>(KEYS[0] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.LEFT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.LEFT, buttonType), 8, value -> updateResetButton(0));
-    public final OptionInstance<Integer> backButtonY = new OptionInstance<>(KEYS[0] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, value -> updateResetButton(0));
-    public final OptionInstance<Integer> moveEntryBackButtonX = new OptionInstance<>(KEYS[1] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.LEFT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.LEFT, buttonType), 36, value -> updateResetButton(1));
-    public final OptionInstance<Integer> moveEntryBackButtonY = new OptionInstance<>(KEYS[1] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, value -> updateResetButton(1));
-    public final OptionInstance<Integer> newFolderButtonX = new OptionInstance<>(KEYS[2] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.RIGHT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.RIGHT, buttonType), -56, value -> updateResetButton(2));
-    public final OptionInstance<Integer> newFolderButtonY = new OptionInstance<>(KEYS[2] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, value -> updateResetButton(2));
-    public final OptionInstance<Integer> optionsButtonX = new OptionInstance<>(KEYS[3] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.RIGHT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.RIGHT, buttonType), -28, value -> updateResetButton(3));
-    public final OptionInstance<Integer> optionsButtonY = new OptionInstance<>(KEYS[3] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, value -> updateResetButton(3));
-    public final OptionInstance<Integer> moveEntryIntoButtonX = new OptionInstance<>(KEYS[4] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.RIGHT_LIST_WIDGET.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.RIGHT_LIST_WIDGET, buttonType), -30, value -> updateResetButton(4));
-    public final OptionInstance<Integer> moveEntryIntoButtonY = new OptionInstance<>(KEYS[4] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(0, 12, buttonType), 6, value -> updateResetButton(4));
-    @SuppressWarnings("SuspiciousNameCombination")
-    public final List<List<Tuple<String, OptionInstance<?>>>> optionsArray = List.of(List.of(new Tuple<>("backButton_x", backButtonX), new Tuple<>("backButton_y", backButtonY)), List.of(new Tuple<>("moveEntryBackButton_x", moveEntryBackButtonX), new Tuple<>("moveEntryBackButton_y", moveEntryBackButtonY)), List.of(new Tuple<>("newFolderButton_x", newFolderButtonX), new Tuple<>("newFolderButton_y", newFolderButtonY)), List.of(new Tuple<>("optionsButton_x", optionsButtonX), new Tuple<>("optionsButton_y", optionsButtonY)), List.of(new Tuple<>("moveEntryIntoButton_x", moveEntryIntoButtonX), new Tuple<>("moveEntryIntoButton_y", moveEntryIntoButtonY)), List.of(new Tuple<>("buttonType", buttonType)));
+    public final OptionInstance<Integer> backButtonX = new OptionInstance<>(KEYS[0] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.LEFT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.LEFT, buttonType), 8, _ -> updateResetButton(0));
+    public final OptionInstance<Integer> backButtonY = new OptionInstance<>(KEYS[0] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, _ -> updateResetButton(0));
+    public final OptionInstance<Integer> moveEntryBackButtonX = new OptionInstance<>(KEYS[1] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.LEFT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.LEFT, buttonType), 36, _ -> updateResetButton(1));
+    public final OptionInstance<Integer> moveEntryBackButtonY = new OptionInstance<>(KEYS[1] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, _ -> updateResetButton(1));
+    public final OptionInstance<Integer> newFolderButtonX = new OptionInstance<>(KEYS[2] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.RIGHT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.RIGHT, buttonType), -56, _ -> updateResetButton(2));
+    public final OptionInstance<Integer> newFolderButtonY = new OptionInstance<>(KEYS[2] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, _ -> updateResetButton(2));
+    public final OptionInstance<Integer> optionsButtonX = new OptionInstance<>(KEYS[3] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.RIGHT.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.RIGHT, buttonType), -28, _ -> updateResetButton(3));
+    public final OptionInstance<Integer> optionsButtonY = new OptionInstance<>(KEYS[3] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.TOP, buttonType), 8, _ -> updateResetButton(3));
+    public final OptionInstance<Integer> moveEntryIntoButtonX = new OptionInstance<>(KEYS[4] + ".x", OptionInstance.noTooltip(), ScreenRelativeCallbacks.RIGHT_LIST_WIDGET.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(ScreenRelativeCallbacks.RIGHT_LIST_WIDGET, buttonType), -30, _ -> updateResetButton(4));
+    public final OptionInstance<Integer> moveEntryIntoButtonY = new OptionInstance<>(KEYS[4] + ".y", OptionInstance.noTooltip(), ScreenRelativeCallbacks.TOP.displayValueTextGetter, new BothSuppliableIntSliderCallbacks(0, 12, buttonType), 6, _ -> updateResetButton(4));
+    public final List<List<Pair<String, OptionInstance<?>>>> optionsArray = List.of(List.of(Pair.of("backButton_x", backButtonX), Pair.of("backButton_y", backButtonY)), List.of(Pair.of("moveEntryBackButton_x", moveEntryBackButtonX), Pair.of("moveEntryBackButton_y", moveEntryBackButtonY)), List.of(Pair.of("newFolderButton_x", newFolderButtonX), Pair.of("newFolderButton_y", newFolderButtonY)), List.of(Pair.of("optionsButton_x", optionsButtonX), Pair.of("optionsButton_y", optionsButtonY)), List.of(Pair.of("moveEntryIntoButton_x", moveEntryIntoButtonX), Pair.of("moveEntryIntoButton_y", moveEntryIntoButtonY)), List.of(Pair.of("buttonType", buttonType)));
 
     public OrganizablePlayScreensOptions() {
         load();
+    }
+
+    @SuppressWarnings("ConstantValue")
+    private static int hasScreen(ToIntFunction<Screen> function, int fallback) {
+        return Minecraft.getInstance().gui != null && Minecraft.getInstance().gui.screen() != null ? function.applyAsInt(Minecraft.getInstance().gui.screen()) : fallback;
     }
 
     /**
@@ -69,7 +77,7 @@ public class OrganizablePlayScreensOptions {
      * @see ScreenRelativeCallbacks#RIGHT
      */
     private static int fromRightRelative(int value) {
-        return Minecraft.getInstance().screen == null ? 0 : Minecraft.getInstance().screen.width + value;
+        return hasScreen(screen -> screen.width + value, 0);
     }
 
     /**
@@ -90,7 +98,8 @@ public class OrganizablePlayScreensOptions {
      * @see #fromRightRelativeListWidget(int)
      */
     private static int getListWidgetRight() {
-        Screen screen = Minecraft.getInstance().screen;
+        @SuppressWarnings("ConstantValue")
+        Screen screen = Minecraft.getInstance().gui != null ? Minecraft.getInstance().gui.screen() : null;
         while (screen != null) {
             if (screen instanceof OrganizablePlayScreensOptionsScreen optionsScreen) {
                 screen = optionsScreen.getParent();
@@ -128,9 +137,9 @@ public class OrganizablePlayScreensOptions {
             OrganizablePlayScreens.LOGGER.error("Failed to load options", e);
             return;
         }
-        for (List<Tuple<String, OptionInstance<?>>> optionRow : optionsArray) {
-            for (Tuple<String, OptionInstance<?>> namedOption : optionRow) {
-                parseOption(optionsJson, namedOption.getA(), namedOption.getB());
+        for (List<Pair<String, OptionInstance<?>>> optionRow : optionsArray) {
+            for (Pair<String, OptionInstance<?>> namedOption : optionRow) {
+                parseOption(optionsJson, namedOption.key(), namedOption.value());
             }
         }
     }
@@ -153,9 +162,9 @@ public class OrganizablePlayScreensOptions {
      */
     public void save() {
         JsonObject optionsJson = new JsonObject();
-        for (List<Tuple<String, OptionInstance<?>>> optionRow : optionsArray) {
-            for (Tuple<String, OptionInstance<?>> namedOption : optionRow) {
-                saveOption(optionsJson, namedOption.getA(), namedOption.getB());
+        for (List<Pair<String, OptionInstance<?>>> optionRow : optionsArray) {
+            for (Pair<String, OptionInstance<?>> namedOption : optionRow) {
+                saveOption(optionsJson, namedOption.key(), namedOption.value());
             }
         }
         Path tempFile;
@@ -216,8 +225,8 @@ public class OrganizablePlayScreensOptions {
      * @param row the row to update
      */
     public void updateResetButton(int row) {
-        if (Minecraft.getInstance().screen instanceof OrganizablePlayScreensButtonOptionsScreen optionsScreen) {
-            optionsScreen.updateResetButton(row, optionsArray.get(row).stream().map(Tuple::getB).anyMatch(OrganizablePlayScreensOptions::notDefault));
+        if (Minecraft.getInstance().gui.screen() instanceof OrganizablePlayScreensButtonOptionsScreen optionsScreen) {
+            optionsScreen.updateResetButton(row, optionsArray.get(row).stream().map(Pair::value).anyMatch(OrganizablePlayScreensOptions::notDefault));
         }
     }
 
@@ -236,9 +245,9 @@ public class OrganizablePlayScreensOptions {
      *
      * @param options the options to reset
      */
-    public static void reset(List<Tuple<String, OptionInstance<?>>> options) {
-        for (Tuple<String, OptionInstance<?>> option : options) {
-            reset(option.getB());
+    public static void reset(List<Pair<String, OptionInstance<?>>> options) {
+        for (Pair<String, OptionInstance<?>> option : options) {
+            reset(option.value());
         }
     }
 
@@ -260,20 +269,20 @@ public class OrganizablePlayScreensOptions {
         /**
          * This will store option values relative to the left side of a screen.
          */
-        LEFT(0, () -> Minecraft.getInstance().screen == null ? Integer.MAX_VALUE - 1 : Minecraft.getInstance().screen.width - 20, X),
+        LEFT(0, () -> hasScreen(screen -> screen.width - 20, Integer.MAX_VALUE - 1), X),
         /**
          * This will store option values relative to the right side of a screen.
          */
-        RIGHT(() -> Minecraft.getInstance().screen == null ? Integer.MIN_VALUE : -Minecraft.getInstance().screen.width, -20, string -> Minecraft.getInstance().screen == null ? 0 : Integer.parseInt(string) - Minecraft.getInstance().screen.width, OrganizablePlayScreensOptions::fromRightRelative, (optionText, value) -> Options.genericValueLabel(X, value)),
+        RIGHT(() -> hasScreen(screen -> -screen.width, Integer.MIN_VALUE), -20, string -> hasScreen(screen -> Integer.parseInt(string) - screen.width, 0), OrganizablePlayScreensOptions::fromRightRelative, (_, value) -> Options.genericValueLabel(X, value)),
         /**
          * This will store option values relative to the right side of the list widget in a screen.
          * The right side of list widget will be assumed to be {@code 5/6} of the screen width if a {@link JoinMultiplayerScreen} or a {@link SelectWorldScreen} could not be found.
          */
-        RIGHT_LIST_WIDGET(() -> -getListWidgetRight(), () -> Minecraft.getInstance().screen == null ? Integer.MAX_VALUE - 1 : Minecraft.getInstance().screen.width - getListWidgetRight() - 20, string -> Minecraft.getInstance().screen == null ? 0 : Integer.parseInt(string) - getListWidgetRight(), OrganizablePlayScreensOptions::fromRightRelativeListWidget, (optionText, value) -> Options.genericValueLabel(X, value)),
+        RIGHT_LIST_WIDGET(() -> -getListWidgetRight(), () -> hasScreen(screen -> screen.width - getListWidgetRight() - 20, Integer.MAX_VALUE - 1), string -> hasScreen(_ -> Integer.parseInt(string) - getListWidgetRight(), 0), OrganizablePlayScreensOptions::fromRightRelativeListWidget, (_, value) -> Options.genericValueLabel(X, value)),
         /**
          * This will store option values relative to the top of a screen.
          */
-        TOP(0, () -> Minecraft.getInstance().screen == null ? Integer.MAX_VALUE - 1 : Minecraft.getInstance().screen.height - 20, Y);
+        TOP(0, () -> hasScreen(screen -> screen.height - 20, Integer.MAX_VALUE - 1), Y);
         /**
          * Supplier for the minimum value of the option.
          */
@@ -296,7 +305,7 @@ public class OrganizablePlayScreensOptions {
         public final OptionInstance.CaptionBasedToString<Integer> displayValueTextGetter;
 
         ScreenRelativeCallbacks(int minInclusive, IntSupplier maxSupplier, Component displayTextPrefix) {
-            this(() -> minInclusive, maxSupplier, Integer::parseInt, UnaryOperator.identity(), (optionText, value) -> Options.genericValueLabel(displayTextPrefix, value));
+            this(() -> minInclusive, maxSupplier, Integer::parseInt, UnaryOperator.identity(), (_, value) -> Options.genericValueLabel(displayTextPrefix, value));
         }
 
         ScreenRelativeCallbacks(IntSupplier minSupplier, int maxInclusive, Function<String, Integer> displayValueParser, UnaryOperator<Integer> displayValueGetter, OptionInstance.CaptionBasedToString<Integer> valueTextGetter) {

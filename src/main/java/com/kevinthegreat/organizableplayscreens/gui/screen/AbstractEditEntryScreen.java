@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
@@ -65,7 +66,7 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
      * @param entry the entry to be edited
      */
     public AbstractEditEntryScreen(Screen parent, BooleanConsumer callback, AbstractEntry<T, E> entry) {
-        this(parent, callback, type -> entry, entry, false);
+        this(parent, callback, _ -> entry, entry, false);
     }
 
     private AbstractEditEntryScreen(Screen parent, BooleanConsumer callback, Function<EntryType, AbstractEntry<T, E>> factory, AbstractEntry<T, E> entry, boolean newEntry) {
@@ -86,7 +87,7 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
             List<EntryType> entryTypes = getEntryTypes();
             GridLayout.RowHelper adder = gridWidget.createRowHelper(entryTypes.size());
             for (EntryType entryType : entryTypes) {
-                entryTypeButtons.put(entryType, adder.addChild(addRenderableWidget(Button.builder(entryType.text(), buttonWidget_ -> setType(entryType)).width(50).build())));
+                entryTypeButtons.put(entryType, adder.addChild(addRenderableWidget(Button.builder(entryType.text(), _ -> setType(entryType)).width(50).build())));
             }
             gridWidget.arrangeElements();
             FrameLayout.centerInRectangle(gridWidget, 0, 40, width, 40);
@@ -99,8 +100,8 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
         nameField.setValue(entry.getValue());
         nameField.setResponder(this::updateDoneButton);
         addRenderableWidget(nameField);
-        buttonDone = addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, buttonWidget -> saveAndClose()).bounds(width / 2 - 100, height / 4 + 96 + 12, 200, 20).build());
-        addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, buttonWidget -> callback.accept(false)).bounds(width / 2 - 100, height / 4 + 120 + 12, 200, 20).build());
+        buttonDone = addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, _ -> saveAndClose()).bounds(width / 2 - 100, height / 4 + 96 + 12, 200, 20).build());
+        addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, _ -> callback.accept(false)).bounds(width / 2 - 100, height / 4 + 120 + 12, 200, 20).build());
         updateButtons();
     }
 
@@ -122,7 +123,7 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
      * @see #saveAndClose()
      */
     @Override
-    public boolean keyPressed(KeyEvent input) {
+    public boolean keyPressed(@NonNull KeyEvent input) {
         if (!buttonDone.active || getFocused() != nameField || input.key() != GLFW.GLFW_KEY_ENTER && input.key() != GLFW.GLFW_KEY_KP_ENTER) {
             return super.keyPressed(input);
         } else {
@@ -143,7 +144,7 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
 
     @Override
     public void onClose() {
-        minecraft.setScreen(parent);
+        minecraft.gui.setScreen(parent);
     }
 
     /**
@@ -177,7 +178,7 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.extractRenderState(context, mouseX, mouseY, delta);
         context.centeredText(font, typeTitle, width / 2, 20, 0xFFFFFFFF);
         context.text(font, typeEnterName, width / 2 - 100, 80, 0xFFA0A0A0);

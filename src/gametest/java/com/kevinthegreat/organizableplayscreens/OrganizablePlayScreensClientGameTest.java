@@ -7,15 +7,15 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotComparisonOptions;
 import net.fabricmc.fabric.mixin.client.gametest.gui.ScreenAccessor;
+import net.minecraft.Optionull;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
-import net.minecraft.client.gui.components.ObjectSelectionList;
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
-import net.minecraft.Optionull;
 
 import java.util.List;
 import java.util.Optional;
@@ -180,7 +180,7 @@ public class OrganizablePlayScreensClientGameTest implements FabricClientGameTes
     }
 
     private void clickScreenButton(ClientGameTestContext context, String text) {
-        context.runOnClient(client -> Optional.ofNullable(client.screen)
+        context.runOnClient(client -> Optional.ofNullable(client.gui.screen())
                 .map(ScreenAccessor.class::cast)
                 .map(ScreenAccessor::getRenderables)
                 .orElse(List.of())
@@ -190,7 +190,7 @@ public class OrganizablePlayScreensClientGameTest implements FabricClientGameTes
                 .filter(clickableWidget -> text.equals(clickableWidget.getMessage().getString()))
                 .findAny()
                 .ifPresentOrElse(clickableWidget -> clickableWidget.onClick(new MouseButtonEvent(clickableWidget.getX(), clickableWidget.getY(), new MouseButtonInfo(0, 0)), false), () -> {
-                    throw new AssertionError("Could not find button '%s' in screen '%s'".formatted(text, Optionull.map(client.screen, screen -> screen.getClass().getName())));
+                    throw new AssertionError("Could not find button '%s' in screen '%s'".formatted(text, Optionull.map(client.gui.screen(), screen -> screen.getClass().getName())));
                 })
         );
     }
@@ -219,7 +219,7 @@ public class OrganizablePlayScreensClientGameTest implements FabricClientGameTes
     }
 
     private ObjectSelectionList<?> getListWidget(Minecraft client) {
-        return Optional.ofNullable(client.screen)
+        return Optional.ofNullable(client.gui.screen())
                 .map(ScreenAccessor.class::cast)
                 .map(ScreenAccessor::getRenderables)
                 .orElse(List.of())
@@ -227,7 +227,7 @@ public class OrganizablePlayScreensClientGameTest implements FabricClientGameTes
                 .filter(ObjectSelectionList.class::isInstance)
                 .map(ObjectSelectionList.class::cast)
                 .findAny()
-                .orElseThrow(() -> new AssertionError("Could not find list widget in screen '%s'".formatted((Object) Optionull.map(client.screen, screen -> screen.getClass().getName()))));
+                .orElseThrow(() -> new AssertionError("Could not find list widget in screen '%s'".formatted((Object) Optionull.map(client.gui.screen(), screen -> screen.getClass().getName()))));
     }
 
     @SuppressWarnings("unchecked")

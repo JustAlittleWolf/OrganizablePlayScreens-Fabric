@@ -3,18 +3,20 @@ package com.kevinthegreat.organizableplayscreens.gui.screen;
 import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.option.BothSuppliableIntSliderCallbacks;
 import com.kevinthegreat.organizableplayscreens.option.OrganizablePlayScreensOptions;
-import com.terraformersmc.modmenu.gui.widget.LegacyTexturedButtonWidget;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.OptionInstance;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.SpriteIconButton;
+import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,12 +49,23 @@ public class OrganizablePlayScreensButtonDragScreen extends Screen {
     protected void init() {
         layout.addTitleHeader(title, font);
 
-        draggableButtons.add(addRenderableWidget(Button.builder(Component.nullToEmpty("←"), button -> {}).bounds(options.backButtonX.get(), options.backButtonY.get(), 20, 20).build()));
-        draggableButtons.add(addRenderableWidget(Button.builder(Component.nullToEmpty("←+"), button -> {}).bounds(options.moveEntryBackButtonX.get(), options.moveEntryBackButtonY.get(), 20, 20).tooltip(OrganizablePlayScreens.MOVE_ENTRY_BACK_TOOLTIP).build()));
-        draggableButtons.add(addRenderableWidget(Button.builder(Component.nullToEmpty("+"), button -> {}).bounds(options.getValue(options.newFolderButtonX), options.newFolderButtonY.get(), 20, 20).build()));
-        draggableButtons.add(addRenderableWidget(new LegacyTexturedButtonWidget(options.getValue(options.optionsButtonX), options.optionsButtonY.get(), 20, 20, 0, 0, 20, OrganizablePlayScreens.OPTIONS_BUTTON_TEXTURE, 32, 64, button -> {}, Component.translatable("organizableplayscreens:options.optionsButton"))));
+        draggableButtons.add(addRenderableWidget(Button.builder(Component.nullToEmpty("←"), _ -> {}).bounds(options.backButtonX.get(), options.backButtonY.get(), 20, 20).build()));
+        draggableButtons.add(addRenderableWidget(Button.builder(Component.nullToEmpty("←+"), _ -> {}).bounds(options.moveEntryBackButtonX.get(), options.moveEntryBackButtonY.get(), 20, 20).tooltip(OrganizablePlayScreens.MOVE_ENTRY_BACK_TOOLTIP).build()));
+        draggableButtons.add(addRenderableWidget(Button.builder(Component.nullToEmpty("+"), _ -> {}).bounds(options.getValue(options.newFolderButtonX), options.newFolderButtonY.get(), 20, 20).build()));
 
-        layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, button -> onClose()).width(200).build());
+        SpriteIconButton buttonOptions = addRenderableWidget(SpriteIconButton.builder(Component.translatable("organizableplayscreens:options.optionsButton"), _ -> {}, true)
+                .size(20, 20)
+                .sprite(new WidgetSprites(
+                        OrganizablePlayScreens.OPTIONS_BUTTON_ENABLED,
+                        OrganizablePlayScreens.OPTIONS_BUTTON_DISABLED,
+                        OrganizablePlayScreens.OPTIONS_BUTTON_FOCUSED
+                ), 20, 20)
+                .build()
+        );
+        buttonOptions.setPosition(options.getValue(options.optionsButtonX), options.optionsButtonY.get());
+        draggableButtons.add(buttonOptions);
+
+        layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, _ -> onClose()).width(200).build());
 
         layout.visitWidgets(this::addRenderableWidget);
         layout.arrangeElements();
@@ -78,7 +91,7 @@ public class OrganizablePlayScreensButtonDragScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
+    public boolean mouseDragged(@NonNull MouseButtonEvent click, double offsetX, double offsetY) {
         if (getFocused() instanceof Button button && draggableButtons.contains(button)) {
             int x = (int) Math.clamp(click.x() - mouseClickRelativeX, 0, width - button.getWidth());
             int y = (int) Math.clamp(click.y() - mouseClickRelativeY, 0, height - button.getHeight());
@@ -112,7 +125,7 @@ public class OrganizablePlayScreensButtonDragScreen extends Screen {
 
     @Override
     public void onClose() {
-        minecraft.setScreen(parent);
+        minecraft.gui.setScreen(parent);
     }
 
     @Override
