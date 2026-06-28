@@ -3,6 +3,7 @@ package com.kevinthegreat.organizableplayscreens.gui;
 import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
@@ -32,15 +33,15 @@ public class SingleplayerFolderEntry extends AbstractSingleplayerEntry implement
     private final Button buttonMoveInto;
 
     public SingleplayerFolderEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent) {
-        this(screen, parent, I18n.get("organizableplayscreens:entry.new", EntryType.FOLDER.text().getString()), new ArrayList<>(), new ArrayList<>());
+        this(screen, parent, I18n.get("organizableplayscreens:entry.new", EntryType.FOLDER.text().getString()), null);
     }
 
-    public SingleplayerFolderEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull String name) {
-        this(screen, parent, name, new ArrayList<>(), new ArrayList<>());
+    public SingleplayerFolderEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull String name, @Nullable NativeImage customIconImage) {
+        this(screen, parent, name, customIconImage, new ArrayList<>(), new ArrayList<>());
     }
 
-    public SingleplayerFolderEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull String name, @NotNull List<AbstractSingleplayerEntry> nonWorldEntries, @NotNull List<WorldSelectionList.WorldListEntry> worldEntries) {
-        super(screen, parent, EntryType.FOLDER, name);
+    public SingleplayerFolderEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull String name, @Nullable NativeImage customIconImage, @NotNull List<AbstractSingleplayerEntry> nonWorldEntries, @NotNull List<WorldSelectionList.WorldListEntry> worldEntries) {
+        super(screen, parent, EntryType.FOLDER, name, customIconImage);
         this.nonWorldEntries = nonWorldEntries;
         this.worldEntries = worldEntries;
         buttonMoveInto = Button.builder(Component.nullToEmpty("+"), _ -> {

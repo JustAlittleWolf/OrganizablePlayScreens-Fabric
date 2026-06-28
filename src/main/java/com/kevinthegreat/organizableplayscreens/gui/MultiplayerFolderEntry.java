@@ -5,6 +5,7 @@ import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.mixin.ServerSelectionListMixin;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.JoinMultiplayerScreenAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.ServerSelectionListAccessor;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -36,15 +37,15 @@ public class MultiplayerFolderEntry extends AbstractMultiplayerEntry implements 
     private final Button buttonMoveInto;
 
     public MultiplayerFolderEntry(@NotNull JoinMultiplayerScreen screen, @Nullable MultiplayerFolderEntry parent) {
-        this(screen, parent, I18n.get("organizableplayscreens:entry.new", EntryType.FOLDER.text().getString()), new ArrayList<>());
+        this(screen, parent, I18n.get("organizableplayscreens:entry.new", EntryType.FOLDER.text().getString()), null);
     }
 
-    public MultiplayerFolderEntry(@NotNull JoinMultiplayerScreen screen, @Nullable MultiplayerFolderEntry parent, @NotNull String name) {
-        this(screen, parent, name, new ArrayList<>());
+    public MultiplayerFolderEntry(@NotNull JoinMultiplayerScreen screen, @Nullable MultiplayerFolderEntry parent, @NotNull String name, @Nullable NativeImage customIconImage) {
+        this(screen, parent, name, customIconImage, new ArrayList<>());
     }
 
-    public MultiplayerFolderEntry(@NotNull JoinMultiplayerScreen screen, @Nullable MultiplayerFolderEntry parent, @NotNull String name, @NotNull List<ServerSelectionList.Entry> entries) {
-        super(screen, parent, EntryType.FOLDER, name);
+    public MultiplayerFolderEntry(@NotNull JoinMultiplayerScreen screen, @Nullable MultiplayerFolderEntry parent, @NotNull String name, @Nullable NativeImage customIconImage, @NotNull List<ServerSelectionList.Entry> entries) {
+        super(screen, parent, EntryType.FOLDER, name, customIconImage);
         this.entries = entries;
         buttonMoveInto = Button.builder(Component.nullToEmpty("+"), _ -> {
             ServerSelectionList serverListWidget = ((JoinMultiplayerScreenAccessor) screen).getServerSelectionList();

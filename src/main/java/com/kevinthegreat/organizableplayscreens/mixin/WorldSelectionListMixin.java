@@ -8,16 +8,15 @@ import com.kevinthegreat.organizableplayscreens.gui.WorldListWidgetAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.LevelVersionInvoker;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
-import net.minecraft.client.gui.screens.FaviconTexture;
-import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.StringWidget;
-import net.minecraft.client.gui.screens.worldselection.WorldSelectionList.WorldListEntry;
+import net.minecraft.client.gui.screens.FaviconTexture;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
@@ -68,7 +67,7 @@ public abstract class WorldSelectionListMixin extends ObjectSelectionList<WorldS
      * The root folder. Should contain all entries.
      */
     @Unique
-    private final SingleplayerFolderEntry organizableplayscreens_rootFolder = new SingleplayerFolderEntry((SelectWorldScreen) screen, null, "root");
+    private final SingleplayerFolderEntry organizableplayscreens_rootFolder = new SingleplayerFolderEntry((SelectWorldScreen) screen, null, "root", null);
     /**
      * The current folder. Only entries in this folder will be displayed.
      */
@@ -231,14 +230,14 @@ public abstract class WorldSelectionListMixin extends ObjectSelectionList<WorldS
                     }
                 }
                 case OrganizablePlayScreens.MOD_ID + ":folder" -> {
-                    SingleplayerFolderEntry folderEntry = new SingleplayerFolderEntry((SelectWorldScreen) screen, folder, nbtEntry.getStringOr("name", ""));
+                    SingleplayerFolderEntry folderEntry = (SingleplayerFolderEntry) EntryType.get(Identifier.parse(type)).singleplayerEntry((SelectWorldScreen) screen, folder, nbtEntry.getStringOr("name", ""), OrganizablePlayScreens.readCustomIcon(nbtEntry));
                     if (nbtEntry.getBooleanOr("current", false)) {
                         organizableplayscreens_currentFolder = folderEntry;
                     }
                     organizableplayscreens_fromNbt(folderEntry, nbtEntry, levels);
                     folder.getNonWorldEntries().add(folderEntry);
                 }
-                default -> folder.getNonWorldEntries().add(EntryType.get(Identifier.parse(type)).singleplayerEntry((SelectWorldScreen) screen, folder, nbtEntry.getStringOr("name", "")));
+                default -> folder.getNonWorldEntries().add(EntryType.get(Identifier.parse(type)).singleplayerEntry((SelectWorldScreen) screen, folder, nbtEntry.getStringOr("name", ""), OrganizablePlayScreens.readCustomIcon(nbtEntry)));
             }
         }
     }
@@ -261,11 +260,11 @@ public abstract class WorldSelectionListMixin extends ObjectSelectionList<WorldS
         }
         for (AbstractSingleplayerEntry oldNonWorldEntry : oldFolder.getNonWorldEntries()) {
             if (oldNonWorldEntry instanceof SingleplayerFolderEntry oldFolderEntry) {
-                SingleplayerFolderEntry newFolderEntry = new SingleplayerFolderEntry((SelectWorldScreen) screen, newFolder, oldFolderEntry.getName());
+                SingleplayerFolderEntry newFolderEntry = (SingleplayerFolderEntry) oldFolderEntry.getType().singleplayerEntry((SelectWorldScreen) screen, newFolder, oldNonWorldEntry.getName(), OrganizablePlayScreens.copyCustomIcon(oldNonWorldEntry.getCustomIconTexture()));
                 organizableplayscreens_fromFolder(newFolderEntry, oldFolderEntry, oldCurrentFolder);
                 newFolder.getNonWorldEntries().add(newFolderEntry);
             } else {
-                newFolder.getNonWorldEntries().add(oldNonWorldEntry.getType().singleplayerEntry((SelectWorldScreen) screen, newFolder, oldNonWorldEntry.getName()));
+                newFolder.getNonWorldEntries().add(oldNonWorldEntry.getType().singleplayerEntry((SelectWorldScreen) screen, newFolder, oldNonWorldEntry.getName(), OrganizablePlayScreens.copyCustomIcon(oldNonWorldEntry.getCustomIconTexture())));
             }
         }
         if (oldCurrentFolder == oldFolder) {

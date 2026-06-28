@@ -1,6 +1,7 @@
 package com.kevinthegreat.organizableplayscreens.gui;
 
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import org.jetbrains.annotations.NotNull;
@@ -11,8 +12,8 @@ public class SingleplayerSectionEntry extends AbstractSingleplayerEntry {
         super(screen, parent, EntryType.SECTION);
     }
 
-    public SingleplayerSectionEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull String name) {
-        super(screen, parent, EntryType.SECTION, name);
+    public SingleplayerSectionEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull String name, @Nullable NativeImage customIconImage) {
+        super(screen, parent, EntryType.SECTION, name, customIconImage);
     }
 
     @Override

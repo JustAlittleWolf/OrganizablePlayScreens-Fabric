@@ -46,7 +46,7 @@ public interface AbstractFolderEntry<T extends ObjectSelectionList<E>, E extends
      * {@inheritDoc}
      */
     @Override
-    default void updateButtonStates(E selectedEntry) {
+    default void updateButtonStates(@Nullable E selectedEntry) {
         getButtonMoveInto().active = selectedEntry != null && !(selectedEntry instanceof ServerSelectionList.LANHeader) && selectedEntry != this;
     }
 

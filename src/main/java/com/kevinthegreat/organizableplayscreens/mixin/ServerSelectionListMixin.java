@@ -8,15 +8,15 @@ import com.kevinthegreat.organizableplayscreens.gui.MultiplayerFolderEntry;
 import com.kevinthegreat.organizableplayscreens.gui.MultiplayerServerListWidgetAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.JoinMultiplayerScreenAccessor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
-import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList;
-import net.minecraft.client.gui.screens.FaviconTexture;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.screens.FaviconTexture;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
@@ -67,7 +67,7 @@ public abstract class ServerSelectionListMixin extends ObjectSelectionList<Serve
      */
     @Unique
     @NotNull
-    private final MultiplayerFolderEntry organizableplayscreens_rootFolder = new MultiplayerFolderEntry(screen, null, "root");
+    private final MultiplayerFolderEntry organizableplayscreens_rootFolder = new MultiplayerFolderEntry(screen, null, "root", null);
     /**
      * The current folder. Only entries in this folder will be displayed.
      */
@@ -203,14 +203,14 @@ public abstract class ServerSelectionListMixin extends ObjectSelectionList<Serve
                     }
                 }
                 case OrganizablePlayScreens.MOD_ID + ":folder" -> {
-                    MultiplayerFolderEntry folderEntry = new MultiplayerFolderEntry(screen, folder, nbtEntry.getStringOr("name", ""));
+                    MultiplayerFolderEntry folderEntry = (MultiplayerFolderEntry) EntryType.get(Identifier.parse(type)).multiplayerEntry(screen, folder, nbtEntry.getStringOr("name", ""), OrganizablePlayScreens.readCustomIcon(nbtEntry));
                     if (nbtEntry.getBooleanOr("current", false)) {
                         organizableplayscreens_currentFolder = folderEntry;
                     }
                     organizableplayscreens_fromNbt(folderEntry, nbtEntry, serversSorted);
                     folder.getEntries().add(folderEntry);
                 }
-                default -> folder.getEntries().add(EntryType.get(Identifier.parse(type)).multiplayerEntry(screen, folder, nbtEntry.getStringOr("name", "")));
+                default -> folder.getEntries().add(EntryType.get(Identifier.parse(type)).multiplayerEntry(screen, folder, nbtEntry.getStringOr("name", ""), OrganizablePlayScreens.readCustomIcon(nbtEntry)));
             }
         }
     }

@@ -66,7 +66,7 @@ public interface AbstractEntry<T extends ObjectSelectionList<E>, E extends Objec
      *
      * @param entry the selected entry
      */
-    default void updateButtonStates(E entry) {
+    default void updateButtonStates(@Nullable E entry) {
     }
 
     void render(GuiGraphicsExtractor context, int index, int y, int x, int mouseX, int mouseY, boolean hovered, float tickDelta, String name, int listSize);

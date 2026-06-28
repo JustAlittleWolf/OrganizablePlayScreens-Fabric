@@ -15,6 +15,7 @@
         "WorldSelectionListMixin",
         "WorldSelectionListMixin$WorldEntryAccessor",
         "accessor.AbstractSelectionListInvoker",
+        "accessor.FaviconTextureAccessor",
         "accessor.JoinMultiplayerScreenAccessor",
         "accessor.ServerSelectionListAccessor",
         "accessor.SelectWorldScreenAccessor",

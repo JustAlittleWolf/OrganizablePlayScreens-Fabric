@@ -1,18 +1,24 @@
 package com.kevinthegreat.organizableplayscreens.gui;
 
+import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.AbstractSelectionListInvoker;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.FaviconTexture;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry implements AbstractEntry<WorldSelectionList, WorldSelectionList.Entry> {
     @NotNull
@@ -26,6 +32,8 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
     protected final EntryType type;
     @NotNull
     protected String name;
+    @Nullable
+    private final FaviconTexture customIconTexture;
 
     /**
      * Creates a new entry with the default name.
@@ -35,7 +43,7 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
      * @param type   the type of this entry
      */
     public AbstractSingleplayerEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull EntryType type) {
-        this(screen, parent, type, I18n.get("organizableplayscreens:entry.new", type.text().getString()));
+        this(screen, parent, type, I18n.get("organizableplayscreens:entry.new", type.text().getString()), null);
     }
 
     /**
@@ -46,11 +54,12 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
      * @param type   the type of this entry
      * @param name   the name of this entry
      */
-    public AbstractSingleplayerEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull EntryType type, @NotNull String name) {
+    public AbstractSingleplayerEntry(@NotNull SelectWorldScreen screen, @Nullable SingleplayerFolderEntry parent, @NotNull EntryType type, @NotNull String name, @Nullable NativeImage customIconImage) {
         this.screen = screen;
         this.parent = parent;
         this.type = type;
         this.name = name;
+        this.customIconTexture = OrganizablePlayScreens.uploadCustomIcon(this, customIconImage);
     }
 
     public @Nullable SingleplayerFolderEntry getParent() {
@@ -74,6 +83,15 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
     @Override
     public void setName(@NotNull String name) {
         this.name = name;
+    }
+
+    public @Nullable FaviconTexture getCustomIconTexture() {
+        return customIconTexture;
+    }
+
+    @Override
+    public Optional<Identifier> getCustomIcon() {
+        return customIconTexture != null ? Optional.of(customIconTexture.textureLocation()) : Optional.empty();
     }
 
     @Override
@@ -153,5 +171,12 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
     @Override
     public Component getNarration() {
         return Component.translatable("narrator.select", name);
+    }
+
+    @Override
+    public void close() {
+        if (customIconTexture != null && !customIconTexture.isClosed()) {
+            customIconTexture.close();
+        }
     }
 }
