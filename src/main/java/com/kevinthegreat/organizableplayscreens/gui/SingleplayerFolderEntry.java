@@ -2,16 +2,13 @@ package com.kevinthegreat.organizableplayscreens.gui;
 
 import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
-import com.kevinthegreat.organizableplayscreens.mixin.WorldSelectionListMixin;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
-import net.minecraft.client.gui.screens.FaviconTexture;
-import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +43,7 @@ public class SingleplayerFolderEntry extends AbstractSingleplayerEntry implement
         super(screen, parent, EntryType.FOLDER, name);
         this.nonWorldEntries = nonWorldEntries;
         this.worldEntries = worldEntries;
-        buttonMoveInto = Button.builder(Component.nullToEmpty("+"), button -> {
+        buttonMoveInto = Button.builder(Component.nullToEmpty("+"), _ -> {
             WorldSelectionList levelList = ((SelectWorldScreenAccessor) screen).getList();
             WorldSelectionList.Entry entry = levelList.getSelected();
             if (entry instanceof WorldSelectionList.WorldListEntry worldEntry) {
@@ -76,12 +73,11 @@ public class SingleplayerFolderEntry extends AbstractSingleplayerEntry implement
      * {@inheritDoc}
      */
     @Override
-    public List<Identifier> getIcons() {
-        return worldEntries.stream()
-                .map(WorldSelectionListMixin.WorldEntryAccessor.class::cast)
-                .map(WorldSelectionListMixin.WorldEntryAccessor::getIcon)
-                .map(FaviconTexture::textureLocation)
-                .toList();
+    public List<WorldSelectionList.Entry> getEntries() {
+        ArrayList<WorldSelectionList.Entry> entries = new ArrayList<>();
+        entries.addAll(getNonWorldEntries());
+        entries.addAll(getWorldEntries());
+        return entries;
     }
 
     /**

@@ -6,18 +6,16 @@ import com.kevinthegreat.organizableplayscreens.mixin.ServerSelectionListMixin;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.JoinMultiplayerScreenAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.ServerSelectionListAccessor;
 import net.minecraft.SharedConstants;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList;
-import net.minecraft.client.gui.screens.FaviconTexture;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.server.network.EventLoopGroupHolder;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.server.network.EventLoopGroupHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +46,7 @@ public class MultiplayerFolderEntry extends AbstractMultiplayerEntry implements 
     public MultiplayerFolderEntry(@NotNull JoinMultiplayerScreen screen, @Nullable MultiplayerFolderEntry parent, @NotNull String name, @NotNull List<ServerSelectionList.Entry> entries) {
         super(screen, parent, EntryType.FOLDER, name);
         this.entries = entries;
-        buttonMoveInto = Button.builder(Component.nullToEmpty("+"), button -> {
+        buttonMoveInto = Button.builder(Component.nullToEmpty("+"), _ -> {
             ServerSelectionList serverListWidget = ((JoinMultiplayerScreenAccessor) screen).getServerSelectionList();
             ServerSelectionList.Entry entry = serverListWidget.getSelected();
             if (entry != null) {
@@ -62,21 +60,12 @@ public class MultiplayerFolderEntry extends AbstractMultiplayerEntry implements 
         }).width(20).tooltip(OrganizablePlayScreens.MOVE_ENTRY_INTO_TOOLTIP).build();
     }
 
-    public @NotNull List<ServerSelectionList.Entry> getEntries() {
-        return entries;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<Identifier> getIcons() {
-        return entries.stream()
-                .filter(ServerSelectionList.OnlineServerEntry.class::isInstance)
-                .map(ServerSelectionListMixin.ServerEntryAccessor.class::cast)
-                .map(ServerSelectionListMixin.ServerEntryAccessor::getIcon)
-                .map(FaviconTexture::textureLocation)
-                .toList();
+    public @NotNull List<ServerSelectionList.Entry> getEntries() {
+        return entries;
     }
 
     /**

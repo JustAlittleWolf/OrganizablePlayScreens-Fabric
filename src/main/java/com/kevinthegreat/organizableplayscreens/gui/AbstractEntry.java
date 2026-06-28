@@ -1,26 +1,21 @@
 package com.kevinthegreat.organizableplayscreens.gui;
 
-import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
-import com.kevinthegreat.organizableplayscreens.option.OrganizablePlayScreensOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * An abstract entry with a name and type.
  */
-public interface AbstractEntry<T extends ObjectSelectionList<E>, E extends ObjectSelectionList.Entry<E>> extends Mutable<String> {
+public interface AbstractEntry<T extends ObjectSelectionList<E>, E extends ObjectSelectionList.Entry<E>> extends EntryWithIcon, Mutable<String> {
     Minecraft client = Minecraft.getInstance();
     Identifier JOIN_TEXTURE = Identifier.parse("server_list/join");
     Identifier JOIN_HIGHLIGHTED_TEXTURE = Identifier.parse("server_list/join_highlighted");
@@ -76,40 +71,8 @@ public interface AbstractEntry<T extends ObjectSelectionList<E>, E extends Objec
 
     void render(GuiGraphicsExtractor context, int index, int y, int x, int mouseX, int mouseY, boolean hovered, float tickDelta, String name, int listSize);
 
-    /**
-     * Renders a folder entry with the given parameters.
-     *
-     * @param name           The name of the folder.
-     * @param listSize       The size of the entry list that the folder is in.
-     * @param buttonMoveInto The button to move the selected entry into the folder.
-     */
-    static void renderFolderEntry(GuiGraphicsExtractor context, int index, int y, int x, int mouseX, int mouseY, boolean hovered, float tickDelta, String name, int listSize, List<Identifier> icons, Button buttonMoveInto) {
-        switch (icons.size()) {
-            case 0 -> {}
-            case 1 -> context.blit(RenderPipelines.GUI_TEXTURED, icons.getFirst(), x + 8, y + 8, 0, 0, 16, 16, 32, 32, 32, 32);
-            case 2 -> {
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.getFirst(), x, y + 8, 0, 0, 16, 16, 32, 32, 32, 32);
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.getLast(), x + 16, y + 8, 0, 0, 16, 16, 32, 32, 32, 32);
-            }
-            case 3 -> {
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(0), x + 8, y, 0, 0, 16, 16, 32, 32, 32, 32);
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(1), x, y + 16, 0, 0, 16, 16, 32, 32, 32, 32);
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(2), x + 16, y + 16, 0, 0, 16, 16, 32, 32, 32, 32);
-            }
-            default -> {
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(0), x, y, 0, 0, 16, 16, 32, 32, 32, 32);
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(1), x + 16, y, 0, 0, 16, 16, 32, 32, 32, 32);
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(2), x, y + 16, 0, 0, 16, 16, 32, 32, 32, 32);
-                context.blit(RenderPipelines.GUI_TEXTURED, icons.get(3), x + 16, y + 16, 0, 0, 16, 16, 32, 32, 32, 32);
-            }
-        }
-
-        context.text(client.font, name, x + 32 + 3, y + 1, 0xFFFFFFFF);
-        context.text(client.font, Component.translatable("organizableplayscreens:folder.entries", icons.size()), x + 32 + 3, y + 12, 0xFF808080);
-        renderEntry(context, index, y, x, mouseX, mouseY, hovered, listSize, true);
-        OrganizablePlayScreensOptions options = OrganizablePlayScreens.getInstance().options;
-        buttonMoveInto.setPosition(options.getValue(options.moveEntryIntoButtonX), y + options.moveEntryIntoButtonY.get());
-        buttonMoveInto.extractRenderState(context, mouseX, mouseY, tickDelta);
+    default void renderIcon(GuiGraphicsExtractor context, int x, int y, int width, int height, int mouseX, int mouseY, boolean hovered, float tickDelta, String name, int depth) {
+        getCustomIcon().ifPresent(identifier -> context.blit(RenderPipelines.GUI_TEXTURED, identifier, x, y, 0, 0, width, height, 32, 32, 32, 32));
     }
 
     /**
