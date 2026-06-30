@@ -3,6 +3,7 @@ package com.kevinthegreat.organizableplayscreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.mixin.WorldSelectionListMixin;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.FaviconTextureAccessor;
+import com.kevinthegreat.organizableplayscreens.mixin.accessor.NativeImageInvoker;
 import com.kevinthegreat.organizableplayscreens.option.OrganizablePlayScreensOptions;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.api.ModInitializer;
@@ -10,15 +11,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.FaviconTexture;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.Comparator;
 import java.util.List;
 
@@ -26,6 +32,7 @@ public class OrganizablePlayScreens implements ModInitializer {
     public static final String MOD_ID = "organizableplayscreens";
     public static final String MOD_NAME = "Organizable Play Screens";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final ScopedValue<Screen> REMOVED_NEW_SCREEN = ScopedValue.newInstance();
     public static final Identifier OPTIONS_BUTTON_ENABLED = Identifier.fromNamespaceAndPath(MOD_ID, "options/enabled");
     public static final Identifier OPTIONS_BUTTON_DISABLED = Identifier.fromNamespaceAndPath(MOD_ID, "options/disabled");
     public static final Identifier OPTIONS_BUTTON_FOCUSED = Identifier.fromNamespaceAndPath(MOD_ID, "options/focused");
@@ -74,25 +81,33 @@ public class OrganizablePlayScreens implements ModInitializer {
         }).orElse(null);
     }
 
-    public static <E extends ObjectSelectionList.Entry<E>> @Nullable FaviconTexture uploadCustomIcon(E entry, @Nullable NativeImage customIconImage) {
-        if (customIconImage == null) return null;
+    public static <E extends ObjectSelectionList.Entry<E>> @NotNull FaviconTexture uploadCustomIcon(@NotNull E entry, @Nullable NativeImage customIconImage) {
+        FaviconTexture texture = FaviconTextureAccessor.create(Minecraft.getInstance().getTextureManager(), Identifier.fromNamespaceAndPath(MOD_ID, "custom_icon/" + System.identityHashCode(entry)));
+        if (customIconImage == null) return texture;
 
         try {
-            FaviconTexture texture = FaviconTextureAccessor.create(Minecraft.getInstance().getTextureManager(), Identifier.fromNamespaceAndPath(MOD_ID, "custom_icon/" + entry.hashCode()));
             texture.upload(customIconImage);
-            return texture;
         } catch (Exception e) {
             LOGGER.error("Invalid icon for entry {}", entry, e);
         }
-        return null;
+        return texture;
     }
 
-    public static @Nullable NativeImage copyCustomIcon(@Nullable FaviconTexture oldCustomIconTexture) {
-        if (oldCustomIconTexture == null || ((FaviconTextureAccessor) oldCustomIconTexture).getTexture() == null) return null;
+    public static @Nullable NativeImage copyCustomIcon(@NotNull FaviconTexture oldCustomIconTexture) {
+        if (((FaviconTextureAccessor) oldCustomIconTexture).getTexture() == null) return null;
 
         NativeImage oldImage = ((FaviconTextureAccessor) oldCustomIconTexture).getTexture().getPixels();
         NativeImage newImage = new NativeImage(oldImage.format(), oldImage.getWidth(), oldImage.getHeight(), false);
         newImage.copyFrom(oldImage);
         return newImage;
+    }
+
+    public static void writeCustomIcon(CompoundTag nbtEntry, @NotNull FaviconTexture customIconTexture) {
+        if (((FaviconTextureAccessor) customIconTexture).getTexture() == null) return;
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        WritableByteChannel channel = Channels.newChannel(out);
+        ((NativeImageInvoker) (Object) ((FaviconTextureAccessor) customIconTexture).getTexture().getPixels()).invokeWriteToChannel(channel);
+        nbtEntry.putByteArray("customIcon", out.toByteArray());
     }
 }

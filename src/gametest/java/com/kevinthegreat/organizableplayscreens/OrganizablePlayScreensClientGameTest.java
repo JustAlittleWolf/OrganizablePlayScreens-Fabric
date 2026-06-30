@@ -2,6 +2,7 @@ package com.kevinthegreat.organizableplayscreens;
 
 import com.kevinthegreat.organizableplayscreens.gui.*;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.AbstractSelectionListInvoker;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -11,6 +12,7 @@ import net.minecraft.Optionull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
@@ -89,6 +91,8 @@ public class OrganizablePlayScreensClientGameTest implements FabricClientGameTes
         context.clickScreenButton("selectWorld.deleteButton");
         context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("select-world-screen-root-delete-folder").save());
 
+        testSingleplayerCustomIcon(context);
+
         // Navigate back to the title screen
         clickScreenButton(context, "←");
         context.waitForScreen(TitleScreen.class);
@@ -159,9 +163,69 @@ public class OrganizablePlayScreensClientGameTest implements FabricClientGameTes
         context.clickScreenButton("selectServer.deleteButton");
         context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("multiplayer-screen-root-delete-folder").save());
 
+        testMultiplayerCustomIcon(context);
+
         // Navigate back to the title screen
         clickScreenButton(context, "←");
         context.waitForScreen(TitleScreen.class);
+    }
+
+    private void testSingleplayerCustomIcon(ClientGameTestContext context) {
+        // Add a green custom icon
+        context.runOnClient(client -> {
+            ObjectSelectionList<?> listWidget = getListWidget(client);
+            SingleplayerFolderEntry entry = getListWidgetEntry(listWidget, SingleplayerFolderEntry.class, 0);
+            NativeImage image = new NativeImage(64, 64, true);
+            image.fillRect(0, 0, 64, 64, 0xFF00FF00);
+            entry.getCustomIconTexture().upload(image);
+        });
+        context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("select-world-screen-root-custom-icon").save());
+        // Test serialization
+        context.clickScreenButton("gui.cancel");
+        context.clickScreenButton("menu.singleplayer");
+        context.waitTick();
+        context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("select-world-screen-root-custom-icon").save());
+        // Delete the custom icon
+        clickListWidgetEntry(context, SingleplayerFolderEntry.class, 33);
+        context.clickScreenButton("selectWorld.edit");
+        context.clickScreenButton("organizableplayscreens:entry.icon.delete");
+        context.waitForScreen(ConfirmScreen.class);
+        context.clickScreenButton("organizableplayscreens:entry.icon.delete");
+        context.clickScreenButton("gui.done");
+        context.clickScreenButton("gui.cancel");
+        context.clickScreenButton("menu.singleplayer");
+        context.waitTick();
+        context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("select-world-screen-root-delete-folder").save());
+    }
+
+    private void testMultiplayerCustomIcon(ClientGameTestContext context) {
+        // Add a green custom icon
+        context.runOnClient(client -> {
+            ObjectSelectionList<?> listWidget = getListWidget(client);
+            MultiplayerFolderEntry entry = getListWidgetEntry(listWidget, MultiplayerFolderEntry.class, 0);
+            NativeImage image = new NativeImage(64, 64, true);
+            image.fillRect(0, 0, 64, 64, 0xFF00FF00);
+            entry.getCustomIconTexture().upload(image);
+        });
+        context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("multiplayer-screen-root-custom-icon").save());
+        // Test serialization
+        context.clickScreenButton("gui.cancel");
+        context.clickScreenButton("menu.multiplayer");
+        context.clickScreenButton("gui.proceed");
+        context.waitTick();
+        context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("multiplayer-screen-root-custom-icon").save());
+        // Delete the custom icon
+        clickListWidgetEntry(context, MultiplayerFolderEntry.class, 33);
+        context.clickScreenButton("selectServer.edit");
+        context.clickScreenButton("organizableplayscreens:entry.icon.delete");
+        context.waitForScreen(ConfirmScreen.class);
+        context.clickScreenButton("organizableplayscreens:entry.icon.delete");
+        context.clickScreenButton("gui.done");
+        context.clickScreenButton("gui.cancel");
+        context.clickScreenButton("menu.multiplayer");
+        context.clickScreenButton("gui.proceed");
+        context.waitTick();
+        context.assertScreenshotEquals(TestScreenshotComparisonOptions.of("multiplayer-screen-root-delete-folder").save());
     }
 
     private void createNewFolder(ClientGameTestContext context) {

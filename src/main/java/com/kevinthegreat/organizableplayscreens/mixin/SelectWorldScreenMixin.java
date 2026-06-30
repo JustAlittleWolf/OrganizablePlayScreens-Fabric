@@ -4,12 +4,14 @@ import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.gui.AbstractEntry;
 import com.kevinthegreat.organizableplayscreens.gui.AbstractSingleplayerEntry;
 import com.kevinthegreat.organizableplayscreens.gui.SingleplayerFolderEntry;
+import com.kevinthegreat.organizableplayscreens.gui.screen.AbstractEditEntryScreen;
 import com.kevinthegreat.organizableplayscreens.gui.screen.OrganizablePlayScreensOptionsScreen;
 import com.kevinthegreat.organizableplayscreens.gui.screen.SingleplayerEditEntryScreen;
 import com.kevinthegreat.organizableplayscreens.option.OrganizablePlayScreensOptions;
 import com.llamalad7.mixinextras.expression.Definition;
 import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.layouts.LinearLayout;
@@ -33,6 +35,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 @SuppressWarnings("JavadocReference")
 @Mixin(SelectWorldScreen.class)
@@ -319,11 +324,19 @@ public abstract class SelectWorldScreenMixin extends Screen {
     /**
      * Saves the folders and worlds when the screen is closed. Null check necessary as this screen is closed before the world list widget is set when there are no worlds.
      */
-    @Inject(method = "removed", at = @At("RETURN"))
+    @Inject(method = "removed", at = @At("HEAD"))
     private void organizableplayscreens_removed(CallbackInfo ci) {
         if (list != null) {
             list.organizableplayscreens_saveFile();
         }
+    }
+
+    /**
+     * Prevents closing resources if the new screen needs resources such as custom icons.
+     */
+    @WrapWithCondition(method = "removed", at = @At(value = "INVOKE", target = "Ljava/util/List;forEach(Ljava/util/function/Consumer;)V"))
+    private boolean organizableplayscreens_preventCloseOnRemoved(List<WorldSelectionList.Entry> entries, Consumer<WorldSelectionList.Entry> action) {
+        return !(OrganizablePlayScreens.REMOVED_NEW_SCREEN.get() instanceof AbstractEditEntryScreen);
     }
 
     /**

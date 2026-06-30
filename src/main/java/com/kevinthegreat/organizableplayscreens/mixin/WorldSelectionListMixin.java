@@ -152,6 +152,7 @@ public abstract class WorldSelectionListMixin extends ObjectSelectionList<WorldS
             organizableplayscreens_worlds.clear();
             organizableplayscreens_fromFolder(organizableplayscreens_rootFolder, ((WorldSelectionListMixin) (Object) oldWidget).organizableplayscreens_rootFolder, ((WorldSelectionListMixin) (Object) oldWidget).organizableplayscreens_currentFolder);
             organizableplayscreens_pathWidget = ((WorldSelectionListMixin) (Object) oldWidget).organizableplayscreens_pathWidget;
+            oldWidget.children().forEach(WorldSelectionList.Entry::close); // Manually close resources after returning to the SelectWorldScreen because some resources are left open by SelectWorldScreenMixin#preventCloseOnRemoved.
             organizableplayscreens_updateEntries();
             setSelected(null);
         }, client);
@@ -318,6 +319,7 @@ public abstract class WorldSelectionListMixin extends ObjectSelectionList<WorldS
             }
             nbtEntry.putString("type", nonWorldEntry.getType().id().toString());
             nbtEntry.putString("name", nonWorldEntry.getName());
+            OrganizablePlayScreens.writeCustomIcon(nbtEntry, nonWorldEntry.getCustomIconTexture());
             nbtList.add(nbtEntry);
         }
         for (WorldSelectionList.WorldListEntry worldEntry : folder.getWorldEntries()) {

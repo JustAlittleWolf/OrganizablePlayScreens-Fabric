@@ -242,6 +242,7 @@ public abstract class ServerSelectionListMixin extends ObjectSelectionList<Serve
                 }
                 nbtEntry.putString("type", nonServerEntry.getType().id().toString());
                 nbtEntry.putString("name", nonServerEntry.getName());
+                OrganizablePlayScreens.writeCustomIcon(nbtEntry, nonServerEntry.getCustomIconTexture());
                 nbtList.add(nbtEntry);
             }
         }

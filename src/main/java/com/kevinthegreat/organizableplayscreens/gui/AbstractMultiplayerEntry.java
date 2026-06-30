@@ -3,6 +3,7 @@ package com.kevinthegreat.organizableplayscreens.gui;
 import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.AbstractSelectionListInvoker;
+import com.kevinthegreat.organizableplayscreens.mixin.accessor.FaviconTextureAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.JoinMultiplayerScreenAccessor;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -32,7 +33,7 @@ public abstract class AbstractMultiplayerEntry extends ServerSelectionList.Entry
     protected final EntryType type;
     @NotNull
     protected String name;
-    @Nullable
+    @NotNull
     private final FaviconTexture customIconTexture;
 
     /**
@@ -76,7 +77,7 @@ public abstract class AbstractMultiplayerEntry extends ServerSelectionList.Entry
     }
 
     @Override
-    public boolean matches(ServerSelectionList.Entry entry) {
+    public boolean matches(@NotNull ServerSelectionList.Entry entry) {
         return entry instanceof AbstractMultiplayerEntry other && other.getType() == getType();
     }
 
@@ -95,17 +96,18 @@ public abstract class AbstractMultiplayerEntry extends ServerSelectionList.Entry
         this.name = name;
     }
 
-    public @Nullable FaviconTexture getCustomIconTexture() {
+    @Override
+    public @NotNull FaviconTexture getCustomIconTexture() {
         return customIconTexture;
     }
 
     @Override
     public Optional<Identifier> getCustomIcon() {
-        return customIconTexture != null ? Optional.of(customIconTexture.textureLocation()) : Optional.empty();
+        return ((FaviconTextureAccessor) customIconTexture).getTexture() != null ? Optional.of(customIconTexture.textureLocation()) : Optional.empty();
     }
 
     @Override
-    public final void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+    public final void extractContent(@NotNull GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
         render(context, ((JoinMultiplayerScreenAccessor) screen).getServerSelectionList().children().indexOf(this), getContentY(), getContentX(), mouseX, mouseY, hovered, tickDelta, name, ((JoinMultiplayerScreenAccessor) screen).getServerSelectionList().organizableplayscreens_getCurrentEntries().size());
     }
 
@@ -178,13 +180,13 @@ public abstract class AbstractMultiplayerEntry extends ServerSelectionList.Entry
     }
 
     @Override
-    public Component getNarration() {
+    public @NotNull Component getNarration() {
         return Component.translatable("narrator.select", name);
     }
 
     @Override
     public void close() {
-        if (customIconTexture != null && !customIconTexture.isClosed()) {
+        if (!customIconTexture.isClosed()) {
             customIconTexture.close();
         }
     }

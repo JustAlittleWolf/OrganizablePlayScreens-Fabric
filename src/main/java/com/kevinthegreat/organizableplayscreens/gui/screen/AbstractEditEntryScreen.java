@@ -1,29 +1,38 @@
 package com.kevinthegreat.organizableplayscreens.gui.screen;
 
+import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.gui.AbstractEntry;
+import com.mojang.blaze3d.platform.NativeImage;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
-import net.minecraft.client.gui.layouts.FrameLayout;
-import net.minecraft.client.gui.layouts.GridLayout;
+import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.gui.layouts.*;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, E extends ObjectSelectionList.Entry<E>> extends Screen {
+    private static final SystemToast.SystemToastId SELECT_ICON = new SystemToast.SystemToastId();
     private final Screen parent;
-
     /**
      * This is called when this screen should be closed.
      * <p>
@@ -43,11 +52,12 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
      * Whether a new folder is being created. Allows the done button to be pressed without changing the name if this is true.
      */
     private final boolean newEntry;
-    private Component typeTitle;
-    private Component typeEnterName;
+
+    private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this, 33, 60);
     private EditBox nameField;
     private final Map<EntryType, Button> entryTypeButtons = new HashMap<>();
     private Button buttonDone;
+    private boolean iconChanged;
 
     /**
      * Creates an edit entry screen for a new entry.
@@ -82,26 +92,37 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
 
     @Override
     protected void init() {
+        // Used to clear previous widgets when rebuilding widgets
+        layout.removeChildren();
+        layout.addTitleHeader(Component.translatable(newEntry ? "organizableplayscreens:entry.new" : "organizableplayscreens:entry.edit", entry.getType().text().getString()), font);
+
+        LinearLayout content = layout.addToContents(LinearLayout.vertical().spacing(12));
         if (newEntry) {
-            GridLayout gridWidget = new GridLayout();
             List<EntryType> entryTypes = getEntryTypes();
-            GridLayout.RowHelper adder = gridWidget.createRowHelper(entryTypes.size());
+            GridLayout.RowHelper adder = content.addChild(new GridLayout(), LayoutSettings::alignHorizontallyCenter).createRowHelper(entryTypes.size());
             for (EntryType entryType : entryTypes) {
-                entryTypeButtons.put(entryType, adder.addChild(addRenderableWidget(Button.builder(entryType.text(), _ -> setType(entryType)).width(50).build())));
+                entryTypeButtons.put(entryType, adder.addChild(Button.builder(entryType.text(), _ -> setType(entryType)).width(50).build()));
             }
-            gridWidget.arrangeElements();
-            FrameLayout.centerInRectangle(gridWidget, 0, 40, width, 40);
         }
-        typeTitle = Component.translatable(newEntry ? "organizableplayscreens:entry.new" : "organizableplayscreens:entry.edit", entry.getType().text().getString());
-        typeEnterName = Component.translatable("organizableplayscreens:entry.enterName", entry.getType().text().getString());
-        nameField = new EditBox(font, width / 2 - 100, 90, 200, 20, typeEnterName);
+
+        Component typeEnterName = Component.translatable("organizableplayscreens:entry.enterName", entry.getType().text().getString()).withColor(0xFFA0A0A0);
+        nameField = new EditBox(font, 200, 20, typeEnterName);
         nameField.setMaxLength(128);
         nameField.setFocused(true);
         nameField.setValue(entry.getValue());
         nameField.setResponder(this::updateDoneButton);
-        addRenderableWidget(nameField);
-        buttonDone = addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, _ -> saveAndClose()).bounds(width / 2 - 100, height / 4 + 96 + 12, 200, 20).build());
-        addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, _ -> callback.accept(false)).bounds(width / 2 - 100, height / 4 + 120 + 12, 200, 20).build());
+        content.addChild(CommonLayouts.labeledElement(font, nameField, typeEnterName));
+
+        LinearLayout iconLayout = content.addChild(LinearLayout.horizontal().spacing(4));
+        iconLayout.addChild(Button.builder(Component.translatable("organizableplayscreens:entry.icon.select"), this::selectIcon).width(98).build());
+        iconLayout.addChild(Button.builder(Component.translatable("organizableplayscreens:entry.icon.delete"), _ -> minecraft.gui.setScreen(new ConfirmScreen(this::deleteIcon, Component.translatable("organizableplayscreens:entry.deleteEntryQuestion", Component.translatable("organizableplayscreens:entry.icon")), Component.translatable("organizableplayscreens:entry.deleteEntryWarning", Component.translatable("organizableplayscreens:entry.icon")), Component.translatable("organizableplayscreens:entry.icon.delete"), CommonComponents.GUI_CANCEL))).width(98).build());
+
+        LinearLayout footer = layout.addToFooter(LinearLayout.vertical().spacing(4));
+        buttonDone = footer.addChild(Button.builder(CommonComponents.GUI_DONE, _ -> saveAndClose()).width(200).build());
+        footer.addChild(Button.builder(CommonComponents.GUI_CANCEL, _ -> callback.accept(false)).width(200).build());
+
+        layout.visitWidgets(this::addRenderableWidget);
+        layout.arrangeElements();
         updateButtons();
     }
 
@@ -174,14 +195,53 @@ public abstract class AbstractEditEntryScreen<T extends ObjectSelectionList<E>, 
      * @param text the text to check for changes
      */
     private void updateDoneButton(String text) {
-        buttonDone.active = newEntry || !entry.getValue().equals(text);
+        buttonDone.active = newEntry || !entry.getValue().equals(text) || iconChanged;
     }
 
-    @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(context, mouseX, mouseY, delta);
-        context.centeredText(font, typeTitle, width / 2, 20, 0xFFFFFFFF);
-        context.text(font, typeEnterName, width / 2 - 100, 80, 0xFFA0A0A0);
-        nameField.extractRenderState(context, mouseX, mouseY, delta);
+    private void selectIcon(Button button) {
+        CompletableFuture.runAsync(() -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                PointerBuffer filters = stack.mallocPointer(1);
+                filters.put(stack.UTF8("*.png"));
+                filters.flip();
+                String file = TinyFileDialogs.tinyfd_openFileDialog("", "", filters, "PNG files", false);
+
+                if (file == null) {
+                    minecraft.execute(() -> minecraft.gui.toastManager().addToast(new SystemToast(SELECT_ICON, Component.translatable("organizableplayscreens:entry.icon.selectedNone"), Component.empty())));
+                    return;
+                }
+
+                NativeImage image = resizeIconImage(NativeImage.read(Files.newInputStream(Path.of(file))));
+                minecraft.execute(() -> {
+                    entry.getCustomIconTexture().upload(image);
+                    iconChanged = true;
+                    updateDoneButton(nameField.getValue()); // Needed because the screen stays the same throughout the dialog
+                    minecraft.gui.toastManager().addToast(new SystemToast(SELECT_ICON, Component.translatable("organizableplayscreens:entry.icon.selectSuccess"), Component.empty()));
+                });
+            } catch (IOException e) {
+                OrganizablePlayScreens.LOGGER.error("Failed to read custom icon file for entry {}", entry, e);
+                minecraft.execute(() -> minecraft.gui.toastManager().addToast(new SystemToast(SELECT_ICON, Component.translatable("organizableplayscreens:entry.icon.selectFailed"), Component.empty())));
+            }
+        });
+    }
+
+    private NativeImage resizeIconImage(NativeImage image) {
+        if (image.getWidth() == 64 && image.getHeight() == 64) return image;
+
+        int size = Math.min(image.getWidth(), image.getHeight());
+        int x = (image.getWidth() - size) / 2;
+        int y = (image.getHeight() - size) / 2;
+        NativeImage scaled = new NativeImage(image.format(), 64, 64, false);
+        image.resizeSubRectTo(x, y, size, size, scaled);
+        image.close();
+        return scaled;
+    }
+
+    private void deleteIcon(boolean confirmedAction) {
+        if (confirmedAction) {
+            entry.getCustomIconTexture().clear();
+            iconChanged = true;
+        }
+        minecraft.gui.setScreen(this);
     }
 }

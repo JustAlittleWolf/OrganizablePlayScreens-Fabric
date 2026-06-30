@@ -3,23 +3,23 @@
     "minVersion": "0.8",
     "package": "com.kevinthegreat.organizableplayscreens.mixin",
     "compatibilityLevel": "JAVA_17",
-    "mixins": [
-        "accessor.LevelVersionInvoker"
-    ],
     "client": [
+        "GuiMixin",
         "JoinMultiplayerScreenMixin",
-        "ServerSelectionListMixin",
-        "ServerSelectionListMixin$ServerEntryAccessor",
         "SelectWorldScreenMixin",
         "ServerEntryMixin",
+        "ServerSelectionListMixin",
+        "ServerSelectionListMixin$ServerEntryAccessor",
         "WorldSelectionListMixin",
         "WorldSelectionListMixin$WorldEntryAccessor",
         "accessor.AbstractSelectionListInvoker",
         "accessor.FaviconTextureAccessor",
         "accessor.JoinMultiplayerScreenAccessor",
-        "accessor.ServerSelectionListAccessor",
+        "accessor.LevelVersionInvoker",
+        "accessor.NativeImageInvoker",
+        "accessor.OptionInstanceAccessor",
         "accessor.SelectWorldScreenAccessor",
-        "accessor.OptionInstanceAccessor"
+        "accessor.ServerSelectionListAccessor"
     ],
     "injectors": {
         "defaultRequire": 1

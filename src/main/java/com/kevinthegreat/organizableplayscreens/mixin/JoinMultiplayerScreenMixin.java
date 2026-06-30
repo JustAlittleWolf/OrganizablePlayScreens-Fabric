@@ -279,7 +279,16 @@ public abstract class JoinMultiplayerScreenMixin extends Screen {
     @Unique
     private void organizableplayscreens_deleteEntry(boolean confirmedAction) {
         if (confirmedAction) {
-            serverSelectionList.organizableplayscreens_getCurrentEntries().remove(serverSelectionList.getSelected());
+            ServerSelectionList.Entry nonServer = serverSelectionList.getSelected();
+            if (nonServer instanceof MultiplayerFolderEntry folder) {
+                for (ServerSelectionList.Entry entry : folder.getEntries()) {
+                    if (entry instanceof AbstractMultiplayerEntry nonServerEntry) {
+                        nonServerEntry.setParent(serverSelectionList.organizableplayscreens_getCurrentFolder());
+                    }
+                    serverSelectionList.organizableplayscreens_getCurrentEntries().add(entry);
+                }
+            }
+            serverSelectionList.organizableplayscreens_getCurrentEntries().remove(nonServer);
             serverSelectionList.setSelected(null);
             serverSelectionList.organizableplayscreens_updateAndSave();
         }
@@ -359,7 +368,7 @@ public abstract class JoinMultiplayerScreenMixin extends Screen {
     /**
      * Saves the folders and servers when the screen is closed.
      */
-    @Inject(method = "removed", at = @At(value = "RETURN"))
+    @Inject(method = "removed", at = @At("HEAD"))
     private void organizableplayscreens_removed(CallbackInfo ci) {
         if (preventMultiplayerFeatures) {
             return;

@@ -3,6 +3,7 @@ package com.kevinthegreat.organizableplayscreens.gui;
 import com.kevinthegreat.organizableplayscreens.OrganizablePlayScreens;
 import com.kevinthegreat.organizableplayscreens.api.EntryType;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.AbstractSelectionListInvoker;
+import com.kevinthegreat.organizableplayscreens.mixin.accessor.FaviconTextureAccessor;
 import com.kevinthegreat.organizableplayscreens.mixin.accessor.SelectWorldScreenAccessor;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -32,7 +33,7 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
     protected final EntryType type;
     @NotNull
     protected String name;
-    @Nullable
+    @NotNull
     private final FaviconTexture customIconTexture;
 
     /**
@@ -85,17 +86,18 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
         this.name = name;
     }
 
-    public @Nullable FaviconTexture getCustomIconTexture() {
+    @Override
+    public @NotNull FaviconTexture getCustomIconTexture() {
         return customIconTexture;
     }
 
     @Override
     public Optional<Identifier> getCustomIcon() {
-        return customIconTexture != null ? Optional.of(customIconTexture.textureLocation()) : Optional.empty();
+        return ((FaviconTextureAccessor) customIconTexture).getTexture() != null ? Optional.of(customIconTexture.textureLocation()) : Optional.empty();
     }
 
     @Override
-    public final void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+    public final void extractContent(@NotNull GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
         render(context, ((SelectWorldScreenAccessor) screen).getList().children().indexOf(this), getContentY(), getContentX(), mouseX, mouseY, hovered, tickDelta, name, ((SelectWorldScreenAccessor) screen).getList().organizableplayscreens_getCurrentNonWorldEntries().size());
     }
 
@@ -169,13 +171,13 @@ public abstract class AbstractSingleplayerEntry extends WorldSelectionList.Entry
     }
 
     @Override
-    public Component getNarration() {
+    public @NotNull Component getNarration() {
         return Component.translatable("narrator.select", name);
     }
 
     @Override
     public void close() {
-        if (customIconTexture != null && !customIconTexture.isClosed()) {
+        if (!customIconTexture.isClosed()) {
             customIconTexture.close();
         }
     }

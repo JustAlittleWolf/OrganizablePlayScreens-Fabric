@@ -22,10 +22,10 @@ public class OrganizablePlayScreensOptionsScreen extends Screen {
 
     @Override
     protected void init() {
-        GridLayout gridWidget = new GridLayout().spacing(8);
+        GridLayout gridWidget = new GridLayout().spacing(4);
         GridLayout.RowHelper adder = gridWidget.createRowHelper(2);
-        adder.addChild(Button.builder(Component.translatable("organizableplayscreens:options.buttonDrag"), _ -> minecraft.gui.setScreen(new OrganizablePlayScreensButtonDragScreen(this))).width(96).build());
-        adder.addChild(Button.builder(Component.translatable("organizableplayscreens:options.buttonOptions"), _ -> minecraft.gui.setScreen(new OrganizablePlayScreensButtonOptionsScreen(this))).width(96).build());
+        adder.addChild(Button.builder(Component.translatable("organizableplayscreens:options.buttonDrag"), _ -> minecraft.gui.setScreen(new OrganizablePlayScreensButtonDragScreen(this))).width(98).build());
+        adder.addChild(Button.builder(Component.translatable("organizableplayscreens:options.buttonOptions"), _ -> minecraft.gui.setScreen(new OrganizablePlayScreensButtonOptionsScreen(this))).width(98).build());
         layout.addToContents(gridWidget);
 
         layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, _ -> onClose()).width(200).build());

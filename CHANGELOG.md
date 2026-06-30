@@ -1,5 +1,6 @@
 ## Folders! 1.3.2 for 26.2
-Support for 26.2
+Support for 26.2  
+Add custom icons
 
 ## Folders! 1.3.1 for 26.1
 Support for 26.1

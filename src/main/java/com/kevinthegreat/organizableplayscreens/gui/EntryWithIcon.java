@@ -1,12 +1,17 @@
 package com.kevinthegreat.organizableplayscreens.gui;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.FaviconTexture;
 import net.minecraft.resources.Identifier;
 
 import java.util.Optional;
 
 @FunctionalInterface
 public interface EntryWithIcon {
+    default FaviconTexture getCustomIconTexture() {
+        return null;
+    }
+
     /**
      * Gets a custom icon which will be prioritized over the default icon.
      */
