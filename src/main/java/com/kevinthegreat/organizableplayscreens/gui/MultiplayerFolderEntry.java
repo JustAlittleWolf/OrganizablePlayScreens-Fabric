@@ -98,11 +98,9 @@ public class MultiplayerFolderEntry extends AbstractMultiplayerEntry implements 
             if (pingedOnlineServerEntries > 4) {
                 continue;
             }
-            if (server.getIconBytes() != null) {
-                continue;
-            }
 
-            if (server.state() == ServerData.State.INITIAL) {
+            // Skip pinging if the server icon already exists
+            if (server.state() == ServerData.State.INITIAL && server.getIconBytes() == null) {
                 server.setState(ServerData.State.PINGING);
                 server.motd = CommonComponents.EMPTY;
                 server.status = CommonComponents.EMPTY;
