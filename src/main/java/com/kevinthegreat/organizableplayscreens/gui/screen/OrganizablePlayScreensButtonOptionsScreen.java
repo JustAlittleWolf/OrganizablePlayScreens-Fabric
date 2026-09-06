@@ -68,6 +68,7 @@ public class OrganizablePlayScreensButtonOptionsScreen extends OptionsSubScreen 
         int i = 0;
         ImmutableList.Builder<Button> resetButtonsBuilder = ImmutableList.builderWithExpectedSize(5);
         for (List<Pair<String, OptionInstance<?>>> optionRow : modOptions.optionsArray) {
+            int y = MARGIN_TOP + i * ROW_HEIGHT;
             OptionInstance<Boolean> showButtonOption = modOptions.showButtonOptions.get(i);
             if (showButtonOption != null) {
                 Button toggleButton = Button.builder(
@@ -81,7 +82,6 @@ public class OrganizablePlayScreensButtonOptionsScreen extends OptionsSubScreen 
                 addRenderableWidget(toggleButton);
             }
             int j = 0;
-            int y = MARGIN_TOP + i * ROW_HEIGHT;
             for (Pair<String, OptionInstance<?>> namedOption : optionRow) {
                 int x = width / 2 - 130 + j * 135;
                 addRenderableWidget(namedOption.value().createButton(options, x, y, 125));
