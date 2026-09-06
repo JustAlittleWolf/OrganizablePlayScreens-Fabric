@@ -89,12 +89,16 @@ public class MultiplayerFolderEntry extends AbstractMultiplayerEntry implements 
 
         // Ping servers inside folders similar to MultiplayerServerListWidget.ServerEntry#render
         // Only ping the first 4 servers to load their icon
+        // Skip pinging if the server icon already exists
         int pingedOnlineServerEntries = 0;
         for (ServerSelectionList.Entry entry : entries) {
             if (!(entry instanceof ServerSelectionList.OnlineServerEntry serverEntry)) continue;
             ServerData server = serverEntry.getServerData();
             pingedOnlineServerEntries++;
             if (pingedOnlineServerEntries > 4) {
+                continue;
+            }
+            if (server.getIconBytes() != null) {
                 continue;
             }
 
